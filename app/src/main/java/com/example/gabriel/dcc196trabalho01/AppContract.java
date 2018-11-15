@@ -33,7 +33,7 @@ public class AppContract {
         public final static String COLUMN_NAME_NOME = "nome";
         public final static String COLUMN_NAME_EMAIL = "email";
         public final static String COLUMN_NAME_CPF = "cpf";
-        public final static String CREATE_EVENTO  = "CREATE TABLE "+ Participante.TABLE_NAME+" ("
+        public final static String CREATE_PARTICIPANTE  = "CREATE TABLE "+ Participante.TABLE_NAME+" ("
                 + Participante.COLUMN_NAME_REGISTRO + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + Participante.COLUMN_NAME_NOME+ " TEXT, "
                 + Participante.COLUMN_NAME_EMAIL+ " TEXT, "
@@ -47,7 +47,7 @@ public class AppContract {
         public final static String COLUMN_NAME_REGISTRO = "registro";
         public final static String COLUMN_NAME_PARTICIPANTE = "registroParticipante";
         public final static String COLUMN_NAME_EVENTO = "registroEvento";
-        public final static String CREATE_EVENTO  = "CREATE TABLE "+ ParticipanteEvento.TABLE_NAME+" ("
+        public final static String CREATE_PARTICIPANTEEVETNTO  = "CREATE TABLE "+ ParticipanteEvento.TABLE_NAME+" ("
                 + ParticipanteEvento.COLUMN_NAME_REGISTRO + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + ParticipanteEvento.COLUMN_NAME_PARTICIPANTE+ " INTEGER, "
                 + ParticipanteEvento.COLUMN_NAME_EVENTO+ " INTEGER"
