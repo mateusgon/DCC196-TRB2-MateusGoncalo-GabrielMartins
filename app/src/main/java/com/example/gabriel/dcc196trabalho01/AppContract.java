@@ -27,4 +27,31 @@ public class AppContract {
         public final static String DROP_EVENTO = "DROP TABLE IF EXISTS "+Evento.TABLE_NAME;
     }
 
+    public final class Participante implements BaseColumns {
+        public final static String TABLE_NAME = "Participante";
+        public final static String COLUMN_NAME_REGISTRO = "registro";
+        public final static String COLUMN_NAME_NOME = "nome";
+        public final static String COLUMN_NAME_EMAIL = "email";
+        public final static String COLUMN_NAME_CPF = "cpf";
+        public final static String CREATE_EVENTO  = "CREATE TABLE "+ Participante.TABLE_NAME+" ("
+                + Participante.COLUMN_NAME_REGISTRO + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + Participante.COLUMN_NAME_NOME+ " TEXT, "
+                + Participante.COLUMN_NAME_EMAIL+ " TEXT, "
+                + Participante.COLUMN_NAME_CPF+ " TEXT"
+                +")";
+        public final static String DROP_PARTICIPANTE = "DROP TABLE IF EXISTS "+ Participante.TABLE_NAME;
+    };
+
+    public final class ParticipanteEvento implements BaseColumns{
+        public final static String TABLE_NAME = "ParticipanteEvento";
+        public final static String COLUMN_NAME_REGISTRO = "registro";
+        public final static String COLUMN_NAME_PARTICIPANTE = "registroParticipante";
+        public final static String COLUMN_NAME_EVENTO = "registroEvento";
+        public final static String CREATE_EVENTO  = "CREATE TABLE "+ ParticipanteEvento.TABLE_NAME+" ("
+                + ParticipanteEvento.COLUMN_NAME_REGISTRO + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + ParticipanteEvento.COLUMN_NAME_PARTICIPANTE+ " INTEGER, "
+                + ParticipanteEvento.COLUMN_NAME_EVENTO+ " INTEGER"
+                +")";
+        public final static String DROP_PARTICIPANTEEVENTO = "DROP TABLE IF EXISTS "+ ParticipanteEvento.TABLE_NAME;
+    }
 }
