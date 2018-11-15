@@ -55,6 +55,7 @@ class ParticipanteInformacaoAdapter extends RecyclerView.Adapter<ParticipanteInf
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.txtNomeEvento.setText(eventos.get(position).getNome());
+        holder.txtNumeroEvento.setText(String.valueOf(eventos.get(position).getRegistro()));
     }
 
     @Override
@@ -64,9 +65,11 @@ class ParticipanteInformacaoAdapter extends RecyclerView.Adapter<ParticipanteInf
 
     class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         public TextView txtNomeEvento;
+        public TextView txtNumeroEvento;
 
         public ViewHolder(final View itemView) {
             super(itemView);
+            txtNumeroEvento = itemView.findViewById(R.id.txtNumEvento);
             txtNomeEvento = itemView.findViewById(R.id.txtEventoNome);
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -85,7 +88,7 @@ class ParticipanteInformacaoAdapter extends RecyclerView.Adapter<ParticipanteInf
                     if(longListener!=null){
                         int position = getAdapterPosition();
                         if(position!=RecyclerView.NO_POSITION){
-                            longListener.onParticipanteLongClick(itemView, position);
+                            longListener.onParticipanteLongClick(itemView, Integer.parseInt(txtNumeroEvento.getText().toString()));
                             return true;
                         }
                     }

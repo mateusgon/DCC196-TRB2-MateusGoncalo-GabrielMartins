@@ -7,6 +7,16 @@ import java.util.List;
 
 public class Evento implements Serializable {
 
+    private Integer registro;
+
+    public Integer getRegistro() {
+        return registro;
+    }
+
+    public void setRegistro(Integer registro) {
+        this.registro = registro;
+    }
+
     private String nome;
     private String local;
     private Calendar dataEvento;

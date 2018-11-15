@@ -1,7 +1,10 @@
 package com.example.gabriel.dcc196trabalho01;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -36,11 +39,24 @@ public class ParticipanteInformacaoActivity extends AppCompatActivity {
     private List<Evento> eventosInscritos;
     private List<Evento> eventosTodos;
     private List<Evento> eventosDisponiveis;
+    private Cursor cursor;
+    private EventoDbHelper dbHelperEvento;
+    private ParticipanteDbHelper dbHelperParticipante;
+    private ParticipanteEventoDbHelper dbHelperParticipanteEvento;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_participante_informacao);
+
+        eventosTodos = new ArrayList<>();
+        eventosInscritos = new ArrayList<>();
+
+        dbHelperEvento = new EventoDbHelper(getApplicationContext());
+        dbHelperParticipanteEvento = new ParticipanteEventoDbHelper(getApplicationContext());
+        dbHelperParticipante = new ParticipanteDbHelper(getApplicationContext());
+
+        final Bundle extras = getIntent().getExtras();
 
         btnEditarInformacoes = (Button) findViewById(R.id.btn_EditInfo2);
         txtNomeParticipante = findViewById(R.id.txt_NomeParticipanteInfo2);
@@ -51,111 +67,70 @@ public class ParticipanteInformacaoActivity extends AppCompatActivity {
         rvListaEventosInscrito = (RecyclerView) findViewById(R.id.rv_ListaEventosCadastrados);
         rvListaEventosNaoInscrito = (RecyclerView) findViewById(R.id.rv_ListaEventosDisponíveis);
 
-        Intent intent = getIntent();
-        participante = (Participante) intent.getSerializableExtra("participante");
-
-        txtNomeParticipante.setText("Nome: " +participante.getNome());
-        txtEmailParticipante.setText("Email: " + participante.getEmail());
-        txtCPFParticipante.setText("CPF: " + participante.getCpf());
+        participante = preencheInfos(extras.getInt("registro"));
 
         btnEditarInformacoes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(ParticipanteInformacaoActivity.this, ParticipanteEditActivity.class);
-                intent.putExtra("participante", participante);
+                intent.putExtra("registro", extras.getInt("registro"));
                 startActivityForResult(intent, ParticipanteInformacaoActivity.REQUEST_EDITINFO);
             }
         });
 
-        for (int i = 0; i < ModelDAO.getParticipanteInstance().size(); i++)
-        {
-            List<Participante> parts = ModelDAO.getParticipanteInstance();
-            if (parts.get(i).getCpf().equals(participante.getCpf()))
-            {
-                participante = parts.get(i);
-                break;
-            }
-        }
-
-        eventosInscritos = participante.getEventos();
-        eventosTodos = ModelDAO.getEventoInstance();
-
         rvListaEventosInscrito.setLayoutManager(new LinearLayoutManager(this));
         rvListaEventosNaoInscrito.setLayoutManager(new LinearLayoutManager(this));
 
+        preencherTodosEventos();
+        preencherEventosInscritosENaoInscritos(extras.getInt("registro"));
+
         adapter = new ParticipanteInformacaoAdapter(eventosInscritos);
+
         if (participante.getEventos().size() == 0)
         {
-            adapter2 = new ParticipanteInformacaoAdapter(ModelDAO.getEventoInstance());
-            eventosDisponiveis = ModelDAO.getEventoInstance();
+            eventosDisponiveis = eventosTodos;
+            adapter2 = new ParticipanteInformacaoAdapter(eventosDisponiveis);
         }
         else
         {
-            List<Evento> eventos3 = new ArrayList<>();
-            for (int i = 0; i < ModelDAO.getEventoInstance().size(); i++)
-            {
-                Boolean inserir = true;
-                for (int j = 0; j < participante.getEventos().size(); j++)
-                {
-                    if (eventosTodos.get(i).getNome().equals(participante.getEventos().get(j).getNome()))
-                    {
-                        inserir = false;
-                    }
-                }
-                if (inserir)
-                {
-                    eventos3.add(eventosTodos.get(i));
-                }
-            }
-            eventosDisponiveis = eventos3;
             adapter2 = new ParticipanteInformacaoAdapter(eventosDisponiveis);
         }
 
         adapter.setOnParticipanteLongClickListener(new ParticipanteInformacaoAdapter.OnParticipanteLongClickListener() {
             @Override
             public void onParticipanteLongClick(View participanteView, int position) {
-                List<Participante> partis = new ArrayList<>();
-                Evento e = eventosInscritos.get(position);
-                e.setNumInscritos(e.getNumInscritos() - 1);
-                for (int i = 0; i < e.getParticipanteList().size(); i++)
+                SQLiteDatabase db = dbHelperParticipanteEvento.getReadableDatabase();
+                String []visao = {
+                        AppContract.ParticipanteEvento.COLUMN_NAME_REGISTRO,
+                        AppContract.ParticipanteEvento.COLUMN_NAME_PARTICIPANTE,
+                        AppContract.ParticipanteEvento.COLUMN_NAME_EVENTO,
+                };
+
+                String select = AppContract.ParticipanteEvento.COLUMN_NAME_EVENTO+" = ?";
+                String [] selectArgs = {String.valueOf(position)};
+
+                cursor = db.query(AppContract.ParticipanteEvento.TABLE_NAME, visao,select,selectArgs,null,null, null);
+
+                for (int i = 0; i < cursor.getCount(); i++)
                 {
-                    if (!e.getParticipanteList().get(i).getCpf().equals(participante.getCpf()))
+                    int idxNum = cursor.getColumnIndexOrThrow(AppContract.ParticipanteEvento.COLUMN_NAME_REGISTRO);
+                    int idxNumParticipante = cursor.getColumnIndexOrThrow(AppContract.ParticipanteEvento.COLUMN_NAME_PARTICIPANTE);
+                    int idxNumEvento = cursor.getColumnIndexOrThrow(AppContract.ParticipanteEvento.COLUMN_NAME_EVENTO);
+
+                    cursor.moveToPosition(i);
+                    if (extras.getInt("registro") == cursor.getInt(idxNumParticipante) && position == cursor.getInt(idxNumEvento))
                     {
-                        partis.add(e.getParticipanteList().get(i));
+                        String select2 = AppContract.ParticipanteEvento.COLUMN_NAME_REGISTRO+" = ?";
+                        String [] selectArgs2 = {String.valueOf(cursor.getInt(idxNum))};
+                        db.delete(AppContract.ParticipanteEvento.TABLE_NAME, select2, selectArgs2);
                     }
                 }
-                e.setParticipanteList(partis);
-                List <Evento> eventosInscritos2 = new ArrayList<>();
-                for (int i = 0; i < eventosInscritos.size(); i++)
-                {
-                    if (i != position)
-                    {
-                        eventosInscritos2.add(eventosInscritos.get(i));
-                    }
-                }
-                eventosInscritos = eventosInscritos2;
-                participante.setEventos(eventosInscritos);
+
+                preencherEventosInscritosENaoInscritos(extras.getInt("registro"));
                 adapter.setEventos(eventosInscritos);
                 adapter.notifyDataSetChanged();
-                eventosDisponiveis = new ArrayList<>();
-                for (int i = 0; i < ModelDAO.getEventoInstance().size(); i++)
-                {
-                    Boolean inserir = true;
-                    for (int j = 0; j < participante.getEventos().size(); j++)
-                    {
-                        if (eventosTodos.get(i).getNome().equals(participante.getEventos().get(j).getNome()))
-                        {
-                            inserir = false;
-                        }
-                    }
-                    if (inserir)
-                    {
-                        eventosDisponiveis.add(eventosTodos.get(i));
-                    }
-                }
                 adapter2.setEventos(eventosDisponiveis);
                 adapter2.notifyDataSetChanged();
-                return;
             }
         });
         rvListaEventosInscrito.setAdapter(adapter);
@@ -163,36 +138,18 @@ public class ParticipanteInformacaoActivity extends AppCompatActivity {
         adapter2.setOnParticipanteLongClickListener(new ParticipanteInformacaoAdapter.OnParticipanteLongClickListener() {
             @Override
             public void onParticipanteLongClick(View participanteView, int position) {
-                if (eventosDisponiveis.get(position).getNumInscritos()+1 <= eventosDisponiveis.get(position).getNumMaximoInscritos())
-                {
-                    eventosDisponiveis.get(position).setNumInscritos(eventosDisponiveis.get(position).getNumInscritos() + 1);
-                    participante.getEventos().add(eventosDisponiveis.get(position));
-                    eventosDisponiveis.get(position).getParticipanteList().add(participante);
-                    eventosDisponiveis = new ArrayList<>();
-                    for (int i = 0; i < ModelDAO.getEventoInstance().size(); i++)
-                    {
-                        Boolean inserir = true;
-                        for (int j = 0; j < participante.getEventos().size(); j++)
-                        {
-                            if (eventosTodos.get(i).getNome().equals(participante.getEventos().get(j).getNome()))
-                            {
-                                inserir = false;
-                            }
-                        }
-                        if (inserir)
-                        {
-                            eventosDisponiveis.add(eventosTodos.get(i));
-                        }
-                    }
-                    adapter2.setEventos(eventosDisponiveis);
-                    adapter2.notifyDataSetChanged();
-                    adapter.notifyDataSetChanged();
-                }
-                else
-                {
-                    Toast.makeText(getApplicationContext(), "Evento já está lotado", Toast.LENGTH_SHORT).show();
-                }
-                return;
+                SQLiteDatabase db = dbHelperParticipanteEvento.getWritableDatabase();
+                ContentValues valores = new ContentValues();
+                valores.put(AppContract.ParticipanteEvento.COLUMN_NAME_PARTICIPANTE, extras.getInt("registro"));
+                valores.put(AppContract.ParticipanteEvento.COLUMN_NAME_EVENTO, position);
+                long id = db.insert(AppContract.ParticipanteEvento.TABLE_NAME,null, valores);
+                preencherEventosInscritosENaoInscritos(extras.getInt("registro"));
+                adapter2.setEventos(eventosDisponiveis);
+                adapter2.notifyDataSetChanged();
+                adapter.setEventos(eventosInscritos);
+                adapter.notifyDataSetChanged();
+
+//                  Toast.makeText(getApplicationContext(), "Evento já está lotado", Toast.LENGTH_SHORT).show();
             }
         });
         rvListaEventosNaoInscrito.setAdapter(adapter2);
@@ -217,5 +174,112 @@ public class ParticipanteInformacaoActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+    public Participante preencheInfos(Integer registro)
+    {
+        SQLiteDatabase db = dbHelperParticipante.getReadableDatabase();
+        String []visao = {
+                AppContract.Participante.COLUMN_NAME_REGISTRO,
+                AppContract.Participante.COLUMN_NAME_NOME,
+                AppContract.Participante.COLUMN_NAME_CPF,
+                AppContract.Participante.COLUMN_NAME_EMAIL,
+        };
+
+        String select = AppContract.Participante.COLUMN_NAME_REGISTRO+" = ?";
+        String [] selectArgs = {String.valueOf(registro)};
+
+        cursor = db.query(AppContract.Participante.TABLE_NAME, visao,select,selectArgs,null,null, null);
+
+        int idxNome = cursor.getColumnIndexOrThrow(AppContract.Participante.COLUMN_NAME_NOME);
+        int idxCPF = cursor.getColumnIndexOrThrow(AppContract.Participante.COLUMN_NAME_CPF);
+        int idxEmail = cursor.getColumnIndexOrThrow(AppContract.Participante.COLUMN_NAME_EMAIL);
+
+        cursor.moveToPosition(0);
+
+        Participante participante = new Participante(cursor.getString(idxNome), cursor.getString(idxEmail) ,cursor.getString(idxCPF), null);
+
+        txtNomeParticipante.setText("Nome: " +participante.getNome());
+        txtEmailParticipante.setText("Email: " + participante.getEmail());
+        txtCPFParticipante.setText("CPF: " + participante.getCpf());
+
+        return participante;
+    }
+
+    public void preencherTodosEventos ()
+    {
+        SQLiteDatabase db = dbHelperEvento.getReadableDatabase();
+        String []visao = {
+                AppContract.Evento.COLUMN_NAME_REGISTRO,
+                AppContract.Evento.COLUMN_NAME_NOME,
+        };
+
+        cursor = db.query(AppContract.Evento.TABLE_NAME, visao,null,null,null,null, null);
+
+        int idxNum = cursor.getColumnIndexOrThrow(AppContract.Evento.COLUMN_NAME_REGISTRO);
+        int idxNome = cursor.getColumnIndexOrThrow(AppContract.Evento.COLUMN_NAME_NOME);
+
+        for (int i = 0; i < cursor.getCount(); i++)
+        {
+            cursor.moveToPosition(i);
+            Evento evento = new Evento();
+            evento.setRegistro(cursor.getInt(idxNum));
+            evento.setNome(cursor.getString(idxNome));
+            eventosTodos.add(evento);
+        }
+
+    }
+
+    public void preencherEventosInscritosENaoInscritos(Integer registro)
+    {
+        List<Evento> eventosAux = new ArrayList<>();
+        SQLiteDatabase db = dbHelperParticipanteEvento.getReadableDatabase();
+        String []visao = {
+                AppContract.ParticipanteEvento.COLUMN_NAME_EVENTO,
+        };
+        String select = AppContract.ParticipanteEvento.COLUMN_NAME_PARTICIPANTE+" = ?";
+        String [] selectArgs = {String.valueOf(registro)};
+        cursor = db.query(AppContract.ParticipanteEvento.TABLE_NAME, visao,select,selectArgs,null,null, null);
+        for (int i = 0; i < cursor.getCount(); i++)
+        {
+            cursor.moveToPosition(i);
+            int idxEvento = cursor.getColumnIndexOrThrow(AppContract.ParticipanteEvento.COLUMN_NAME_EVENTO);
+            Integer idEvento = cursor.getInt(idxEvento);
+            for (int j = 0; j < eventosTodos.size(); j++)
+            {
+                if (eventosTodos.get(j).getRegistro().equals(idEvento))
+                {
+                    eventosAux.add(eventosTodos.get(i));
+                }
+            }
+        }
+
+        eventosInscritos = eventosAux;
+        participante.setEventos(eventosInscritos);
+
+        List<Evento> eventos3 = new ArrayList<>();
+        for (int i = 0; i < eventosTodos.size(); i++)
+        {
+            Boolean inserir = true;
+            for (int j = 0; j < participante.getEventos().size(); j++)
+            {
+                if (eventosTodos.get(i).getNome().equals(participante.getEventos().get(j).getNome()))
+                {
+                    inserir = false;
+                }
+            }
+            if (inserir)
+            {
+                eventos3.add(eventosTodos.get(i));
+            }
+        }
+
+        if (participante.getEventos().size() == 0)
+        {
+            eventosDisponiveis = eventosTodos;
+        }
+
+        eventosDisponiveis = eventos3;
+
     }
 }
