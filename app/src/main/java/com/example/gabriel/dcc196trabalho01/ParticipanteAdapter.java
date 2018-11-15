@@ -1,6 +1,7 @@
 package com.example.gabriel.dcc196trabalho01;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -17,7 +18,7 @@ import static com.example.gabriel.dcc196trabalho01.R.layout.participantes_layout
 
 public class ParticipanteAdapter extends RecyclerView.Adapter<ParticipanteAdapter.ViewHolder>{
 
-    private List<Participante> participanteList;
+    private Cursor cursor;
     private OnItemClickListener listener;
 
     public interface OnItemClickListener{
@@ -29,9 +30,14 @@ public class ParticipanteAdapter extends RecyclerView.Adapter<ParticipanteAdapte
         this.listener = listener;
     }
 
-    public ParticipanteAdapter (List<Participante> participantes)
+    public ParticipanteAdapter (Cursor cursor)
     {
-        this.participanteList = participantes;
+        this.cursor = cursor;
+    }
+
+    public void setCursor(Cursor cursor) {
+        this.cursor = cursor;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -46,21 +52,29 @@ public class ParticipanteAdapter extends RecyclerView.Adapter<ParticipanteAdapte
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
-        viewHolder.nomeParticipante.setText(participanteList.get(i).getNome());
+        int idxNum = cursor.getColumnIndexOrThrow(AppContract.Participante.COLUMN_NAME_REGISTRO);
+        int idxNome = cursor.getColumnIndexOrThrow(AppContract.Participante.COLUMN_NAME_NOME);
+
+        cursor.moveToPosition(i);
+
+        viewHolder.numParticipante.setText(String.valueOf(cursor.getInt(idxNum)));
+        viewHolder.nomeParticipante.setText(cursor.getString(idxNome));
     }
 
     @Override
     public int getItemCount() {
-        return participanteList.size();
+        return cursor.getCount();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener
     {
+        public TextView numParticipante;
         public TextView nomeParticipante;
 
         public ViewHolder (final View participanteView)
         {
             super(participanteView);
+            numParticipante = (TextView)participanteView.findViewById(R.id.txtParticipanteNumero);
             nomeParticipante = (TextView)participanteView.findViewById(R.id.txtParticipanteNome);
             participanteView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -70,7 +84,7 @@ public class ParticipanteAdapter extends RecyclerView.Adapter<ParticipanteAdapte
                         int position = getAdapterPosition();
                         if (position != RecyclerView.NO_POSITION)
                         {
-                            listener.onItemClick(participanteView, position);
+                            listener.onItemClick(itemView, Integer.parseInt(numParticipante.getText().toString()));
                         }
                     }
                 }
