@@ -43,6 +43,7 @@ public class ParticipanteInformacaoActivity extends AppCompatActivity {
     private EventoDbHelper dbHelperEvento;
     private ParticipanteDbHelper dbHelperParticipante;
     private ParticipanteEventoDbHelper dbHelperParticipanteEvento;
+    private Integer registro;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +67,8 @@ public class ParticipanteInformacaoActivity extends AppCompatActivity {
         txtEventosNaoCadastrados = findViewById(R.id.txt_EventosDisponiveis2);
         rvListaEventosInscrito = (RecyclerView) findViewById(R.id.rv_ListaEventosCadastrados);
         rvListaEventosNaoInscrito = (RecyclerView) findViewById(R.id.rv_ListaEventosDisponíveis);
+
+        registro = extras.getInt("registro");
 
         participante = preencheInfos(extras.getInt("registro"));
 
@@ -158,20 +161,7 @@ public class ParticipanteInformacaoActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == ParticipanteInformacaoActivity.REQUEST_EDITINFO && resultCode == Activity.RESULT_OK){
-            Participante p = (Participante) data.getSerializableExtra("participante");
-            List<Participante> participanteList = ModelDAO.getParticipanteInstance();
-            for (Participante parts: participanteList) {
-                if (parts.getNome().equals(participante.getNome()) && parts.getCpf().equals(participante.getCpf()) && parts.getEmail().equals(participante.getEmail()))
-                {
-                    parts.setNome(p.getNome());
-                    parts.setCpf(p.getCpf());
-                    parts.setEmail(p.getEmail());
-                    txtNomeParticipante.setText("Nome: " +p.getNome());
-                    txtEmailParticipante.setText("Email: " + p.getEmail());
-                    txtCPFParticipante.setText("CPF: " + p.getCpf());
-                    break;
-                }
-            }
+            preencheInfos(registro);
         }
     }
 

@@ -53,7 +53,6 @@ public class ParticipanteActivity extends AppCompatActivity {
 
             }
         });
-
         rvListaParticipantes.setAdapter(adapter);
 
         int total = getParticipantes().getCount();
