@@ -32,6 +32,7 @@ public class EventoInformacaoActivity extends AppCompatActivity {
     private EventoDbHelper dbHelper;
     private ParticipanteDbHelper dbHelper3;
     private ParticipanteEventoDbHelper dbHelper2;
+    private Integer numInscritos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +58,7 @@ public class EventoInformacaoActivity extends AppCompatActivity {
 
         rv_ListaParticipantesEvento.setLayoutManager(new LinearLayoutManager(this));
         rv_ListaParticipantesEvento.setAdapter(new ParticipanteAdapter(getParticipantes(registro)));
-
+        inscritosEvento.setText("Inscritos: " + String.valueOf(numInscritos));
     }
 
     public void preencheInfos(Integer registro)
@@ -115,9 +116,12 @@ public class EventoInformacaoActivity extends AppCompatActivity {
         String [] selectArgs = {String.valueOf(registro)};
 
         cursor = db.query(AppContract.ParticipanteEvento.TABLE_NAME, visao,select,selectArgs,AppContract.ParticipanteEvento.COLUMN_NAME_PARTICIPANTE,null, null);
-        Log.i("DBINFO", "Passei");
+
+        numInscritos = 0;
+
         for (int i = 0; i < cursor.getCount(); i++)
         {
+            numInscritos++;
             cursor.moveToPosition(i);
             int idxNumParticipante = cursor.getColumnIndexOrThrow(AppContract.ParticipanteEvento.COLUMN_NAME_PARTICIPANTE);
 
@@ -127,13 +131,12 @@ public class EventoInformacaoActivity extends AppCompatActivity {
             String select2 = AppContract.ParticipanteEvento.COLUMN_NAME_REGISTRO+" = ?";
             String [] selectArgs2 = {String.valueOf(cursor.getInt(idxNumParticipante))};
             cursor2 = db2.query(AppContract.Participante.TABLE_NAME, visao2, select2, selectArgs2, null, null, null);
-            cursor2.moveToPosition(i);
+            cursor2.moveToPosition(0);
             int idxNomeParticipante = cursor2.getColumnIndexOrThrow(AppContract.Participante.COLUMN_NAME_NOME);
             Participante participante = new Participante();
             participante.setNome(cursor2.getString(idxNomeParticipante));
             participantes.add(participante);
         }
-        Log.i("DBINFO", "Passei 2");
         return participantes;
 
     }

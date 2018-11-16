@@ -138,7 +138,6 @@ public class ParticipanteInformacaoActivity extends AppCompatActivity {
         adapter2.setOnParticipanteLongClickListener(new ParticipanteInformacaoAdapter.OnParticipanteLongClickListener() {
             @Override
             public void onParticipanteLongClick(View participanteView, int position) {
-                Toast.makeText(getApplicationContext(), "Position " + position, Toast.LENGTH_SHORT).show();
                 SQLiteDatabase db = dbHelperParticipanteEvento.getWritableDatabase();
                 ContentValues valores = new ContentValues();
                 valores.put(AppContract.ParticipanteEvento.COLUMN_NAME_PARTICIPANTE, extras.getInt("registro"));
