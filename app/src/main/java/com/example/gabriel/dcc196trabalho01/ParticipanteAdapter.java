@@ -18,6 +18,7 @@ import static com.example.gabriel.dcc196trabalho01.R.layout.participantes_layout
 
 public class ParticipanteAdapter extends RecyclerView.Adapter<ParticipanteAdapter.ViewHolder>{
 
+    private List<Participante> participantes;
     private Cursor cursor;
     private OnItemClickListener listener;
 
@@ -33,6 +34,11 @@ public class ParticipanteAdapter extends RecyclerView.Adapter<ParticipanteAdapte
     public ParticipanteAdapter (Cursor cursor)
     {
         this.cursor = cursor;
+    }
+
+    public ParticipanteAdapter (List<Participante> participantes)
+    {
+        this.participantes = participantes;
     }
 
     public void setCursor(Cursor cursor) {
@@ -52,18 +58,27 @@ public class ParticipanteAdapter extends RecyclerView.Adapter<ParticipanteAdapte
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
-        int idxNum = cursor.getColumnIndexOrThrow(AppContract.Participante.COLUMN_NAME_REGISTRO);
-        int idxNome = cursor.getColumnIndexOrThrow(AppContract.Participante.COLUMN_NAME_NOME);
+        if (participantes == null) {
+            int idxNum = cursor.getColumnIndexOrThrow(AppContract.Participante.COLUMN_NAME_REGISTRO);
+            int idxNome = cursor.getColumnIndexOrThrow(AppContract.Participante.COLUMN_NAME_NOME);
 
-        cursor.moveToPosition(i);
+            cursor.moveToPosition(i);
 
-        viewHolder.numParticipante.setText(String.valueOf(cursor.getInt(idxNum)));
-        viewHolder.nomeParticipante.setText(cursor.getString(idxNome));
+            viewHolder.numParticipante.setText(String.valueOf(cursor.getInt(idxNum)));
+            viewHolder.nomeParticipante.setText(cursor.getString(idxNome));
+        }
+        else{
+            viewHolder.numParticipante.setText(String.valueOf(i));
+            viewHolder.nomeParticipante.setText(participantes.get(i).getNome());
+        }
     }
 
     @Override
     public int getItemCount() {
-        return cursor.getCount();
+        if (participantes == null)
+            return cursor.getCount();
+        else
+            return participantes.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener

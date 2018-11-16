@@ -138,17 +138,17 @@ public class ParticipanteInformacaoActivity extends AppCompatActivity {
         adapter2.setOnParticipanteLongClickListener(new ParticipanteInformacaoAdapter.OnParticipanteLongClickListener() {
             @Override
             public void onParticipanteLongClick(View participanteView, int position) {
+                Toast.makeText(getApplicationContext(), "Position " + position, Toast.LENGTH_SHORT).show();
                 SQLiteDatabase db = dbHelperParticipanteEvento.getWritableDatabase();
                 ContentValues valores = new ContentValues();
                 valores.put(AppContract.ParticipanteEvento.COLUMN_NAME_PARTICIPANTE, extras.getInt("registro"));
                 valores.put(AppContract.ParticipanteEvento.COLUMN_NAME_EVENTO, position);
                 long id = db.insert(AppContract.ParticipanteEvento.TABLE_NAME,null, valores);
                 preencherEventosInscritosENaoInscritos(extras.getInt("registro"));
-                adapter2.setEventos(eventosDisponiveis);
-                adapter2.notifyDataSetChanged();
                 adapter.setEventos(eventosInscritos);
                 adapter.notifyDataSetChanged();
-
+                adapter2.setEventos(eventosDisponiveis);
+                adapter2.notifyDataSetChanged();
 //                  Toast.makeText(getApplicationContext(), "Evento já está lotado", Toast.LENGTH_SHORT).show();
             }
         });
@@ -249,7 +249,7 @@ public class ParticipanteInformacaoActivity extends AppCompatActivity {
             {
                 if (eventosTodos.get(j).getRegistro().equals(idEvento))
                 {
-                    eventosAux.add(eventosTodos.get(i));
+                    eventosAux.add(eventosTodos.get(j));
                 }
             }
         }

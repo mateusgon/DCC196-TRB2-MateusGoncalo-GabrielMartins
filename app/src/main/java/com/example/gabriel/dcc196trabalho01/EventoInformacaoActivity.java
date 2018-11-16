@@ -7,11 +7,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 public class EventoInformacaoActivity extends AppCompatActivity {
 
@@ -25,7 +28,10 @@ public class EventoInformacaoActivity extends AppCompatActivity {
     private TextView inscritosEvento;
     private TextView descricaoEvento;
     private Cursor cursor;
+    private Cursor cursor2;
     private EventoDbHelper dbHelper;
+    private ParticipanteDbHelper dbHelper3;
+    private ParticipanteEventoDbHelper dbHelper2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,15 +48,15 @@ public class EventoInformacaoActivity extends AppCompatActivity {
         rv_ListaParticipantesEvento = findViewById(R.id.rv_ListaDeInscritosEventoInformacao);
 
         dbHelper = new EventoDbHelper(getApplicationContext());
+        dbHelper2 = new ParticipanteEventoDbHelper(getApplicationContext());
+        dbHelper3 = new ParticipanteDbHelper(getApplicationContext());
 
         Bundle extras = getIntent().getExtras();
-
-        Intent intent = getIntent();
         Integer registro = extras.getInt("position");
         preencheInfos(registro);
 
         rv_ListaParticipantesEvento.setLayoutManager(new LinearLayoutManager(this));
-        //rv_ListaParticipantesEvento.setAdapter(new ParticipanteAdapter(recuperado.getParticipanteList()));
+        rv_ListaParticipantesEvento.setAdapter(new ParticipanteAdapter(getParticipantes(registro)));
 
     }
 
@@ -91,5 +97,44 @@ public class EventoInformacaoActivity extends AppCompatActivity {
         vagasEvento.setText("Vagas: " + String.valueOf(cursor.getInt(idxMaxInscritos)));
         inscritosEvento.setText("Inscritos: " + String.valueOf(cursor.getInt(idxInscritos)));
         descricaoEvento.setText("Descrição: " + cursor.getString(idxDescricao));
+    }
+
+    public List<Participante> getParticipantes(Integer registro)
+    {
+        List<Participante> participantes = new ArrayList<>();
+        SQLiteDatabase db = dbHelper2.getReadableDatabase();
+        SQLiteDatabase db2 = dbHelper3.getReadableDatabase();
+
+        String []visao = {
+                AppContract.ParticipanteEvento.COLUMN_NAME_REGISTRO,
+                AppContract.ParticipanteEvento.COLUMN_NAME_PARTICIPANTE,
+                AppContract.ParticipanteEvento.COLUMN_NAME_EVENTO,
+        };
+
+        String select = AppContract.ParticipanteEvento.COLUMN_NAME_EVENTO+" = ?";
+        String [] selectArgs = {String.valueOf(registro)};
+
+        cursor = db.query(AppContract.ParticipanteEvento.TABLE_NAME, visao,select,selectArgs,AppContract.ParticipanteEvento.COLUMN_NAME_PARTICIPANTE,null, null);
+        Log.i("DBINFO", "Passei");
+        for (int i = 0; i < cursor.getCount(); i++)
+        {
+            cursor.moveToPosition(i);
+            int idxNumParticipante = cursor.getColumnIndexOrThrow(AppContract.ParticipanteEvento.COLUMN_NAME_PARTICIPANTE);
+
+            String []visao2 = {
+                    AppContract.Participante.COLUMN_NAME_NOME,
+            };
+            String select2 = AppContract.ParticipanteEvento.COLUMN_NAME_REGISTRO+" = ?";
+            String [] selectArgs2 = {String.valueOf(cursor.getInt(idxNumParticipante))};
+            cursor2 = db2.query(AppContract.Participante.TABLE_NAME, visao2, select2, selectArgs2, null, null, null);
+            cursor2.moveToPosition(i);
+            int idxNomeParticipante = cursor2.getColumnIndexOrThrow(AppContract.Participante.COLUMN_NAME_NOME);
+            Participante participante = new Participante();
+            participante.setNome(cursor2.getString(idxNomeParticipante));
+            participantes.add(participante);
+        }
+        Log.i("DBINFO", "Passei 2");
+        return participantes;
+
     }
 }
